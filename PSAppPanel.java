@@ -8,6 +8,8 @@ import java.awt.image.BufferedImage;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.*;
+import java.util.Iterator;
+import java.util.HashSet;
 //import java.lang.*;
 
 public class PSAppPanel extends JPanel implements Runnable,MouseListener{
@@ -20,7 +22,9 @@ public class PSAppPanel extends JPanel implements Runnable,MouseListener{
 
 	public PSAppPanel(boolean w){
 		walls=w;
-		system=new PSystem(50);
+		system=new PSystem(3);
+		system.add(new SourceForce(width/2,height/2,1e4));
+		//SourceForce f1=new SourceForce(system,3*width/4,3*height/4,7e9);
 		setPreferredSize(new Dimension(width,height));
 		addMouseListener(this);
 		/*JLabel label=new JLabel("A label");
@@ -43,7 +47,13 @@ public class PSAppPanel extends JPanel implements Runnable,MouseListener{
 		int size=system.particleSize*2;
 		g.setColor(new Color(0,200,0));
 		for (int i=0;i<system.size;i++){
-			g.fillOval((int)system.pos[i].x,(int)system.pos[i].y,size,size);
+			g.fillOval((int)system.particles[i].pos.x,(int)system.particles[i].pos.y,size,size);
+		}
+		Iterator<SourceForce> it=system.sourceForces.iterator();
+		while (it.hasNext()){
+			SourceForce f=it.next();
+			if (!(f.isParticle())) g.setColor(new Color(200,0,0)); else g.setColor(new Color(0,200,0));
+			g.fillOval((int)f.pos.x,(int)f.pos.y,f.size,f.size);
 		}
 		Toolkit.getDefaultToolkit().sync();
 	}	
@@ -65,9 +75,8 @@ public class PSAppPanel extends JPanel implements Runnable,MouseListener{
 	Boolean sw=false;	
 	public void mouseClicked(MouseEvent e){
 		sw=!(sw);
-		if (animation!=null) System.out.println("Thread alive? "+animation.isAlive());
 		if (sw){
-			animation=new Thread(this,"animation"); System.out.println("Thread started");
+			animation=new Thread(this,"animation");
 			animation.start();
 		}
 	}

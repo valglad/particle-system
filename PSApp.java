@@ -2,9 +2,10 @@ package particleSystem;
 
 import javax.swing.JFrame;
 import java.awt.EventQueue;
+import java.awt.BorderLayout;
 
 public class PSApp extends JFrame{
-		public boolean walls=true;
+		public boolean walls=false;
 
 	public static void main(String[] args){
 		if (args.length>0) PSystem.particleSize=Integer.parseInt(args[0]);
@@ -15,7 +16,8 @@ public class PSApp extends JFrame{
 
 	private PSApp(){
 		super("Particle System Generator");
-		add(new PSAppPanel(walls));
+		setLayout(new BorderLayout());
+		add(new PSAppPanel(walls),BorderLayout.CENTER);
 		pack();
 		setLocationRelativeTo(null);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
