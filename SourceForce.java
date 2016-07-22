@@ -8,9 +8,6 @@ public class SourceForce extends Particle{
 
 	public SourceForce(double x, double y,double at){
 		super(new Vec(x,y),new Vec(0,0),new Vec(0,0),at,1,5);
-		//pos=new Vec(x,y);
-		//size=5;
-		//attraction=at;
 		particle=null;
 		distPower=2;
 	}

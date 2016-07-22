@@ -10,18 +10,32 @@ public class PSystem{
 	public int time; //current time in the system
 	public static double timeStep=0.001;
 	public Particle[] particles;
-	public static int size;
+	public final int size;
+	public static int defaultSize=10;
 	private final Random rangen=new Random();
 	public static int particleSize; //this is generic
 	public HashSet<SourceForce> sourceForces;
-	public static boolean interForces=true;
+	public static volatile boolean interForces=true;
 
-	public PSystem(){ //number of particles
+	public PSystem(int width,int height){ //width and height of the panel on which it will be displayed
+		size=defaultSize;
 		particles=new Particle[size];
 		sourceForces=new HashSet<SourceForce>();
 		for (int i=0;i<size;i++){
-			particles[i]=new Particle(new Vec(rangen,"pos"),new Vec(rangen,100),new Vec(0,0),10000,1,particleSize);
-			if (interForces) { sourceForces.add(new SourceForce(particles[i]));}
+			particles[i]=new Particle(new Vec(rangen,width,height),new Vec(rangen,100),new Vec(0,0),1000,1,particleSize);
+			sourceForces.add(new SourceForce(particles[i])); //in case interparticle forces are introduced midway trough the simulation
+		}
+		//currentPositions=new HashSet(makeTupleArray(pos));
+		time=0;
+	}
+
+	public PSystem(int s,int width,int height){ //number of particles, ...
+		size=s;
+		particles=new Particle[size];
+		sourceForces=new HashSet<SourceForce>();
+		for (int i=0;i<size;i++){
+			particles[i]=new Particle(new Vec(rangen,width,height),new Vec(rangen,100),new Vec(0,0),1000,1,particleSize);
+			sourceForces.add(new SourceForce(particles[i])); //in case interparticle forces are introduced midway trough the simulation
 		}
 		//currentPositions=new HashSet(makeTupleArray(pos));
 		time=0;
@@ -35,6 +49,7 @@ public class PSystem{
 			it=sourceForces.iterator();
 			while (it.hasNext()){
 				SourceForce force=it.next();
+				if (!(interForces) && (force.isParticle())) continue;
 				Vec diff=force.pos.difference(particles[i].pos);
 				double dist=Math.pow(diff.magnitude(),force.distPower/2);
 				double factor=force.attraction*timeStep/dist;

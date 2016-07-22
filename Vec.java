@@ -6,9 +6,9 @@ public class Vec{
 	public double x;
 	public double y;
 
-	public Vec(Random rgen, String s){
-		x=rgen.nextDouble()*PSApp.width;
-		y=rgen.nextDouble()*PSApp.height;
+	public Vec(Random rgen, int width, int height){
+		x=rgen.nextDouble()*width;
+		y=rgen.nextDouble()*height;
 	}
 
 	public Vec(Random rgen, double range){
