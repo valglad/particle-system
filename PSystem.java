@@ -16,16 +16,15 @@ public class PSystem{
 	public HashSet<SourceForce> sourceForces;
 	public static boolean interForces=true;
 
-	public PSystem(int num){ //number of particles
-		particles=new Particle[num];
+	public PSystem(){ //number of particles
+		particles=new Particle[size];
 		sourceForces=new HashSet<SourceForce>();
-		for (int i=0;i<num;i++){
+		for (int i=0;i<size;i++){
 			particles[i]=new Particle(new Vec(rangen,"pos"),new Vec(rangen,100),new Vec(0,0),10000,1,particleSize);
 			if (interForces) { sourceForces.add(new SourceForce(particles[i]));}
 		}
 		//currentPositions=new HashSet(makeTupleArray(pos));
 		time=0;
-		size=num;
 	}
 
 	public void evolve(){

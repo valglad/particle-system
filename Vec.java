@@ -7,8 +7,8 @@ public class Vec{
 	public double y;
 
 	public Vec(Random rgen, String s){
-		x=rgen.nextDouble()*PSAppPanel.width;
-		y=rgen.nextDouble()*PSAppPanel.height;
+		x=rgen.nextDouble()*PSApp.width;
+		y=rgen.nextDouble()*PSApp.height;
 	}
 
 	public Vec(Random rgen, double range){

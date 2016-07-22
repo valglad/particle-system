@@ -10,22 +10,23 @@ import java.awt.Toolkit;
 import java.awt.event.*;
 import java.util.Iterator;
 import java.util.HashSet;
+import java.awt.BorderLayout;
 //import java.lang.*;
 
 public class PSAppPanel extends JPanel implements Runnable,MouseListener{
-	public static int width=700;
-	public static int height=500;
-	private BufferedImage image=new BufferedImage(width,height,BufferedImage.TYPE_INT_RGB);;
-	private PSystem system;
-	private Thread animation;
+	private BufferedImage image;
+	public PSystem system;
+	public Thread animation=new Thread(this,"animation");
 	public boolean walls;
+	public volatile boolean forceBeingSet=false; //the following 3 variables is for setting a new SourceForce from ControlPanel;
+	public int mouseX=0;
+	public int mouseY=0;
 
 	public PSAppPanel(boolean w){
 		walls=w;
-		system=new PSystem(3);
-		system.add(new SourceForce(width/2,height/2,1e4));
+		system=new PSystem();
+		system.add(new SourceForce(PSApp.width/2,PSApp.height/2,5e4));
 		//SourceForce f1=new SourceForce(system,3*width/4,3*height/4,7e9);
-		setPreferredSize(new Dimension(width,height));
 		addMouseListener(this);
 		/*JLabel label=new JLabel("A label");
 		label.setOpaque(true);
@@ -37,13 +38,14 @@ public class PSAppPanel extends JPanel implements Runnable,MouseListener{
 	public void paintComponent(Graphics g){
 		super.paintComponent(g);
 		drawParticles(system);
-		g.drawImage(image,0,0,null);
+		g.drawImage(image,0,0,getWidth(),getHeight(),null);
 	}
 
 	private void drawParticles(PSystem system){
+		image=new BufferedImage(getWidth(),getHeight(),BufferedImage.TYPE_INT_RGB);
 		Graphics g=image.createGraphics();
-		g.setColor(Color.black);
-  		g.fillRect(0, 0, image.getWidth(), image.getHeight());
+		//g.setColor(Color.black);
+  		//g.fillRect(0, 0, image.getWidth(), image.getHeight());
 		int size=system.particleSize*2;
 		g.setColor(new Color(0,200,0));
 		for (int i=0;i<system.size;i++){
@@ -61,7 +63,7 @@ public class PSAppPanel extends JPanel implements Runnable,MouseListener{
 	@Override
 	public void run(){
 		while(sw){
-			if (walls) system.evolve(width,height); else system.evolve();
+			if (walls) system.evolve(getWidth(),getHeight()); else system.evolve();
 			repaint();
 			pause((int)(PSystem.timeStep*1000));
 		}
@@ -74,11 +76,18 @@ public class PSAppPanel extends JPanel implements Runnable,MouseListener{
 
 	Boolean sw=false;	
 	public void mouseClicked(MouseEvent e){
-		sw=!(sw);
-		if (sw){
-			animation=new Thread(this,"animation");
-			animation.start();
-		}
+		if (!(forceBeingSet)){
+			sw=!(sw);
+			if (sw){
+				animation.start();
+			}else{
+				animation=new Thread(this,"animation");
+			}
+		}else{
+			mouseX=e.getX();
+			mouseY=e.getY();
+			forceBeingSet=false;
+		}	
 	}
 
 	public void mouseEntered(MouseEvent e){}
