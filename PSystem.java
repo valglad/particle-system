@@ -10,23 +10,21 @@ public class PSystem{
 	public int time; //current time in the system
 	public static double timeStep=0.001;
 	public Particle[] particles;
+	public float[][] nextPos; //next predicted position of a particle
 	public final int size;
 	public static int defaultSize=10;
 	private final Random rangen=new Random();
 	public static int particleSize; //this is generic
 	public HashSet<SourceForce> sourceForces;
 	public static volatile boolean interForces=true;
+	public static double interForceValue=10;
+	public boolean gravityOn=false;
+	public boolean changeInterForces=false;
+	public double unitDistance=40; //no of pixels that constitute a unit distance wrt which force is applied
+	private CollisionManager cMngr;
 
 	public PSystem(int width,int height){ //width and height of the panel on which it will be displayed
-		size=defaultSize;
-		particles=new Particle[size];
-		sourceForces=new HashSet<SourceForce>();
-		for (int i=0;i<size;i++){
-			particles[i]=new Particle(new Vec(rangen,width,height),new Vec(rangen,100),new Vec(0,0),1000,1,particleSize);
-			sourceForces.add(new SourceForce(particles[i])); //in case interparticle forces are introduced midway trough the simulation
-		}
-		//currentPositions=new HashSet(makeTupleArray(pos));
-		time=0;
+		this(defaultSize,width,height);
 	}
 
 	public PSystem(int s,int width,int height){ //number of particles, ...
@@ -34,70 +32,70 @@ public class PSystem{
 		particles=new Particle[size];
 		sourceForces=new HashSet<SourceForce>();
 		for (int i=0;i<size;i++){
-			particles[i]=new Particle(new Vec(rangen,width,height),new Vec(rangen,100),new Vec(0,0),1000,1,particleSize);
-			sourceForces.add(new SourceForce(particles[i])); //in case interparticle forces are introduced midway trough the simulation
+			particles[i]=new Particle(new Vec(rangen,width,height),new Vec(rangen,100),new Vec(0,0),1*1e3,1,particleSize);
+			sourceForces.add(new SourceForce(particles[i],interForceValue,1,100));
 		}
-		//currentPositions=new HashSet(makeTupleArray(pos));
 		time=0;
+		cMngr=new CollisionManager(this);
+	}
+
+	public PSystem(int s,int width,int height,double ul){
+		this(s,width,height);
+		unitDistance=ul;
 	}
 
 	public void evolve(){
 		Iterator<SourceForce> it;
+		boolean sw=false;
+		if (changeInterForces) sw=true;
 		for (int i=0;i<size;i++){
 			particles[i].pos.add(particles[i].vel.timesNew(timeStep));
+			if (gravityOn) particles[i].vel.add(new Vec(0,1*1e3*timeStep));
 			particles[i].vel.add(particles[i].acc.timesNew(timeStep));
 			it=sourceForces.iterator();
 			while (it.hasNext()){
 				SourceForce force=it.next();
-				if (!(interForces) && (force.isParticle())) continue;
-				Vec diff=force.pos.difference(particles[i].pos);
-				double dist=Math.pow(diff.magnitude(),force.distPower/2);
-				double factor=force.attraction*timeStep/dist;
-				if (dist != 0) particles[i].vel.add(diff.timesNew(factor));
-				else if (!(force.particle==particles[i])) { particles[i].vel=new Vec(0,0); }
-				//if (force.isParticle()){force.particle.vel.add(diff.timesNew(-1*factor));}
+				if (sw) force.attraction=interForceValue;
+				if (force.isParticle()){
+					cMngr.collide(particles[i],force.particle);
+				  	if (!(interForces)) continue;
+				}
+				force.apply(particles[i], timeStep, unitDistance);
 			}
+			particles[i].prevPos=particles[i].pos;
 		}
+		if (sw) changeInterForces=false;
 		it=sourceForces.iterator();
 		while (it.hasNext()){
 			it.next().update();
 		}
-		//currentPositions=new HashSet(pos);
 		time+=timeStep;
 	}
 
 	public void evolve(int width,int height){
 		Iterator<SourceForce> it;
 		for (int i=0;i<size;i++){
-			Vec v=nextpos(i);
+			Vec v=nextpos(particles[i]);
 			if ((int)(v.x)+particleSize>width || (int)(v.x)+particleSize<0) particles[i].vel.x*=-1;
 			if ((int)(v.y)+particleSize>height || (int)(v.y)+particleSize<0) particles[i].vel.y*=-1;
-		//a very ineffective way of managing collisions (assuming elastic collisions for now)	
-		/*for (int j=0;j<size;j++){
-				if ((nextpos[j].x-nextpos[i].x)*(nextpos[j].x-nextpos[i].x)+(nextpos[j].y-nextpos[i].y)*(nextpos[j].y-nextpos[i].y)<4*particleSize*particleSize) vel[i].x*/
 			particles[i].pos.add(particles[i].vel.timesNew(timeStep));
 			particles[i].vel.add(particles[i].acc.timesNew(timeStep));
 			it=sourceForces.iterator();
 			while (it.hasNext()){
 				SourceForce force=it.next();
-				Vec diff=force.pos.difference(particles[i].pos);
-				double dist=Math.pow(diff.magnitude(),force.distPower/2);
-				double factor=force.attraction*timeStep/dist;
-				if (dist != 0) particles[i].vel.add(diff.timesNew(factor));
-				else if (!(force.particle==particles[i])) { particles[i].vel=new Vec(0,0); }
-				//if (force.isParticle()){force.particle.vel.add(diff.timesNew(-1*factor));}
+				if (!(interForces) && (force.isParticle())) continue;
+				force.apply(particles[i], timeStep,unitDistance);
 			}
 		}
 		it=sourceForces.iterator();
 		while (it.hasNext()){
 			it.next().update();
 		}
-		//currentPositions=new HashSet(pos);
 		time+=timeStep;
 	}
 
-	public Vec nextpos(int i){
-		return particles[i].pos.addNew(particles[i].vel);
+	public Vec nextpos(Particle p){
+		return p.pos.addNew(p.vel.timesNew(timeStep));
 	}
 
 	/*public Vec nextvel(int i){
@@ -122,6 +120,14 @@ public class PSystem{
 			posTuples[i]=tuple;
 		}
 	}*/
+
+	public void collide(Particle p1,Particle p2){ //p1 is going to be modified but not p2
+		Vec diff=nextpos(p1).difference(nextpos(p2));
+		if (diff.magnitude()<=(p1.size+p2.size)*(p1.size+p2.size)){
+			double tan=diff.y/diff.x;
+			p1.vel.x*=tan;
+		}
+	}
 
 	public void add(SourceForce s){
 		sourceForces.add(s);

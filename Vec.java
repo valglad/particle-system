@@ -51,6 +51,18 @@ public class Vec{
 		return x*x+y*y;
 	}
 
+	public void normalise(){
+		if (magnitude()!=0){
+			double m=Math.sqrt(magnitude());
+			x/=m;
+			y/=m;
+		}
+	}
+
+	public double dot(Vec v){
+		return x*v.x+y*v.y;
+	}
+
 	public String toString(){
 		return "("+x+", "+y+")";
 	}

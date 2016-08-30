@@ -25,12 +25,7 @@ public class PSAppPanel extends JPanel implements Runnable,MouseListener{
 	public PSAppPanel(boolean w){
 		walls=w;
 		system=new PSystem(PSApp.width,PSApp.height);
-		//SourceForce f1=new SourceForce(system,3*width/4,3*height/4,7e9);
 		addMouseListener(this);
-		/*JLabel label=new JLabel("A label");
-		label.setOpaque(true);
-		mainFrame.getContentPane().add(label);*/
-		//setVisible(true);
 	}
 
 	@Override
