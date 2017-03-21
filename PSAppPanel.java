@@ -18,13 +18,14 @@ public class PSAppPanel extends JPanel implements Runnable,MouseListener{
 	public PSystem system;
 	public Thread animation=new Thread(this,"animation");
 	public boolean walls;
-	public volatile boolean forceBeingSet=false; //the following 3 variables is for setting a new SourceForce from ControlPanel;
+//the following 3 variables is for setting a new SourceForce from ControlPanel;
+	public volatile boolean forceBeingSet=false;
 	public int mouseX=0;
 	public int mouseY=0;
 
 	public PSAppPanel(boolean w){
 		walls=w;
-		system=new PSystem(PSApp.width,PSApp.height);
+		system=new PSystem(PSApp.width,PSApp.height,new CollisionManager(this,PSystem.timeStep));
 		addMouseListener(this);
 	}
 
@@ -40,16 +41,18 @@ public class PSAppPanel extends JPanel implements Runnable,MouseListener{
 		Graphics g=image.createGraphics();
 		//g.setColor(Color.black);
   		//g.fillRect(0, 0, image.getWidth(), image.getHeight());
-		int size=system.particleSize*2;
 		g.setColor(new Color(0,200,0));
 		for (int i=0;i<system.size;i++){
-			g.fillOval((int)system.particles[i].pos.x,(int)system.particles[i].pos.y,size,size);
+			int size=system.particles[i].size;
+			g.fillOval((int)(system.particles[i].pos.x-size),(int)(system.particles[i].pos.y-size),2*size,2*size);
 		}
 		Iterator<SourceForce> it=system.sourceForces.iterator();
 		while (it.hasNext()){
 			SourceForce f=it.next();
-			if (!(f.isParticle())) g.setColor(new Color(200,0,0)); else g.setColor(new Color(0,200,0));
-			g.fillOval((int)f.pos.x,(int)f.pos.y,f.size,f.size);
+			if (!(f.isParticle())){
+				g.setColor(new Color(200,0,0));
+				g.fillOval((int)(f.pos.x-f.size),(int)(f.pos.y-f.size),2*f.size,2*f.size);
+			}
 		}
 		Toolkit.getDefaultToolkit().sync();
 	}	
@@ -57,7 +60,7 @@ public class PSAppPanel extends JPanel implements Runnable,MouseListener{
 	@Override
 	public void run(){
 		while(sw){
-			if (walls) system.evolve(getWidth(),getHeight()); else system.evolve();
+			system.evolve(walls);
 			repaint();
 			pause((int)(PSystem.timeStep*1000));
 		}

@@ -12,7 +12,7 @@ public class PSApp extends JFrame{
 
 	public static void main(String[] args){
 		if (args.length>0) PSystem.particleSize=Integer.parseInt(args[0]);
-		else PSystem.particleSize=5;
+		else PSystem.particleSize=10;
         JFrame frame = new PSApp();
         frame.setVisible(true); 
 	}
