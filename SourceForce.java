@@ -14,7 +14,7 @@ public class SourceForce extends Particle{
 	}
 
 	public SourceForce(double x, double y,double at,double dp,double l){
-		super(new Vec(x,y),new Vec(0,0),new Vec(0,0),at,1,5);
+		super(-1,new Vec(x,y),new Vec(0,0),at,1,5);
 		particle=null;
 		distPower=dp;
 		natLength=l;
@@ -24,6 +24,7 @@ public class SourceForce extends Particle{
 		super(p);
 		particle=p;
 		distPower=-2;
+		natLength=0;
 	}
 
 	public SourceForce(Particle p,double at,double dp,double l){
@@ -56,8 +57,7 @@ public class SourceForce extends Particle{
 				if (dist==0){
 					if (distPower<1) { p.vel=new Vec(0,0); return; }
 					else factor=0;
-				}else factor=attraction*timeStep*Math.pow(dist/unitDistance,distPower)/diffLength;
-				if (dist<0) factor*=-dist;
+				}else factor=attraction*unitDistance*timeStep*Math.pow(dist/unitDistance,distPower)/diffLength;
 				p.vel.add(diff.timesNew(factor));
 	}
 }

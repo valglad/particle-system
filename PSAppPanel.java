@@ -11,13 +11,18 @@ import java.awt.event.*;
 import java.util.Iterator;
 import java.util.HashSet;
 import java.awt.BorderLayout;
-//import java.lang.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.concurrent.*;
+import java.lang.Void;
 
 public class PSAppPanel extends JPanel implements Runnable,MouseListener{
 	private BufferedImage image;
 	public PSystem system;
 	public Thread animation=new Thread(this,"animation");
 	public boolean walls;
+	public boolean merge=false;
 //the following 3 variables is for setting a new SourceForce from ControlPanel;
 	public volatile boolean forceBeingSet=false;
 	public int mouseX=0;
@@ -32,15 +37,71 @@ public class PSAppPanel extends JPanel implements Runnable,MouseListener{
 	@Override
 	public void paintComponent(Graphics g){
 		super.paintComponent(g);
-		drawParticles(system);
+        if (merge) drawParticlesMerge(system);
+        else drawParticles(system);
 		g.drawImage(image,0,0,getWidth(),getHeight(),null);
 	}
+
+	private void drawParticlesMerge(PSystem system){
+		image=new BufferedImage(getWidth(),getHeight(),BufferedImage.TYPE_INT_RGB);
+        //System.out.println("drawing");
+
+        int numThreads = 10;
+        ExecutorService executor = Executors.newFixedThreadPool(numThreads);
+
+        List<Future<?>> futures = new ArrayList<>();
+
+        for (int xt=0;xt<getWidth();xt+=numThreads){
+        final int xtf = xt;
+        for (int id=0;id<numThreads;id++){
+            final int idf = id;
+            futures.add(executor.submit(() -> {
+                synchronized(image){
+                int x = xtf + idf;
+                double particlePotential = system.averageMass/(double)system.particleSize;
+                for (int y=0; y<getHeight(); y++){
+                    double potential = 0;
+                    for (int i=0;i<system.size;i++){
+                        double x_p = system.particles[i].pos.x;
+                        double y_p = system.particles[i].pos.y;
+                        double r = Math.sqrt((x-x_p)*(x-x_p)+(y-y_p)*(y-y_p));
+                        if (r>0){
+                            potential = potential + system.particles[i].mass/r;
+                            //System.out.println(r+" "+potential+" "+1/r+" "+system.particles[i].size);
+                        }else{
+                            image.setRGB(x, y, (new Color(0,200,0)).getRGB());
+                            break;
+                        }
+                        //System.out.println(particlePotential);
+                        if (potential >= particlePotential){
+                            image.setRGB(x, y, (new Color(0,200,0)).getRGB());
+                            //Vec p = painted.get(0);
+                            //System.out.println("Thread row "+x+" "+y+" "+image.getRGB(x, y)+" "+(new Color(0,200,0)).getRGB());}
+                            break;
+                        }
+                    }
+                }
+                }
+            }));
+        }
+        }
+
+        executor.shutdown();
+        try{
+            executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+         }catch(InterruptedException e){
+                System.out.println("Something went wrong with the graphics");
+                System.exit(0);
+         }
+
+
+    }
 
 	private void drawParticles(PSystem system){
 		image=new BufferedImage(getWidth(),getHeight(),BufferedImage.TYPE_INT_RGB);
 		Graphics g=image.createGraphics();
-		//g.setColor(Color.black);
-  		//g.fillRect(0, 0, image.getWidth(), image.getHeight());
+		g.setColor(Color.black);
+  		g.fillRect(0, 0, image.getWidth(), image.getHeight());
 		g.setColor(new Color(0,200,0));
 		for (int i=0;i<system.size;i++){
 			int size=system.particles[i].size;
@@ -54,7 +115,6 @@ public class PSAppPanel extends JPanel implements Runnable,MouseListener{
 				g.fillOval((int)(f.pos.x-f.size),(int)(f.pos.y-f.size),2*f.size,2*f.size);
 			}
 		}
-		Toolkit.getDefaultToolkit().sync();
 	}	
 
 	@Override

@@ -13,18 +13,14 @@ public class CollisionManager{
 
 double gap=1;
 //updating the positions of both particles before processing other collisions is inaccurate but will do for now; maybe employ matrices to do everything simultaneously in the future (or concurrency)
-	public void collide(Particle p1,Particle p2,boolean walls,boolean start){
+	public void collide(Particle p1,Particle p2,boolean start){
 		if (p1.number>=p2.number) return;
-		if (walls && !(start)){
-			collideAtWalls(p1);
-			collideAtWalls(p2);
-		}
 		Vec diff=(p1.pos).difference(p2.pos);
 		double dist=Math.sqrt(diff.magnitude());
 		double crtDist=p1.size+p2.size;
 		if (dist<=crtDist){ //if particles are overlapping
 			diff.normalise();
-			p1.pos.add(diff.timesNew((crtDist-dist)/2+gap));
+			p1.pos.add(diff.timesNew((crtDist-dist)/2));
 			p2.pos.add(diff.timesNew((dist-crtDist)/2));
 			if (!start) collideInLine(p1,p2,diff);
 		/*}else{
@@ -51,7 +47,7 @@ double gap=1;
 		p2.vel.add(d.timesNew(newVel2-vel2));
 	}
 
-	private void collideAtWalls(Particle p){
+	public void collideAtWalls(Particle p){
 		double width=panel.getWidth();
 		double height=panel.getHeight();
 		if (p.pos.x>=width-p.size) {p.pos.x=width-p.size; p.vel.x*=-1;}
