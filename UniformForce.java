@@ -1,6 +1,6 @@
 package particleSystem;
 
-public class UniformForce{
+public class UniformForce implements java.io.Serializable{
 	public final double attraction;
 	public Vec direction;
 	public final double natLength;

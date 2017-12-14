@@ -20,30 +20,51 @@ import java.lang.Void;
 public class PSAppPanel extends JPanel implements Runnable,MouseListener{
 	private BufferedImage image;
 	public PSystem system;
-	public Thread animation=new Thread(this,"animation");
+	public Thread animation=new Thread(this, "animation");
 	public boolean walls;
 	public boolean merge=false;
 //the following 3 variables is for setting a new SourceForce from ControlPanel;
-	public volatile boolean forceBeingSet=false;
+	public volatile boolean awaitingInput=false;
 	public int mouseX=0;
 	public int mouseY=0;
 
 	public PSAppPanel(boolean w){
-		walls=w;
-		system=new PSystem(PSApp.width,PSApp.height,new CollisionManager(this,PSystem.timeStep));
+		walls = w;
+		system = new PSystem(PSApp.width, PSApp.height, new CollisionManager(this, PSystem.timeStep));
 		addMouseListener(this);
 	}
+
+    public void stop(){
+        // stop animation
+        sw = false;
+    }
+
+    public void restart(){
+        // resume a paused animation
+        sw = true;
+		animation = new Thread(this, "animation");
+		animation.start();
+    }
+
+    public void restart(PSystem s){
+        // restart animation with a given system
+        // (don't start the animation)
+        sw = false;
+        system = s;
+		animation = new Thread(this, "animation");
+		repaint();
+    }
 
 	@Override
 	public void paintComponent(Graphics g){
 		super.paintComponent(g);
         if (merge) drawParticlesMerge(system);
         else drawParticles(system);
-		g.drawImage(image,0,0,getWidth(),getHeight(),null);
+		g.drawImage(image, 0, 0, getWidth(), getHeight(), null);
 	}
 
 	private void drawParticlesMerge(PSystem system){
-		image=new BufferedImage(getWidth(),getHeight(),BufferedImage.TYPE_INT_RGB);
+		image=new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
         //System.out.println("drawing");
 
         int numThreads = 10;
@@ -51,30 +72,30 @@ public class PSAppPanel extends JPanel implements Runnable,MouseListener{
 
         List<Future<?>> futures = new ArrayList<>();
 
-        for (int xt=0;xt<getWidth();xt+=numThreads){
+        for (int xt = 0; xt < getWidth(); xt += numThreads){
         final int xtf = xt;
-        for (int id=0;id<numThreads;id++){
+        for (int id = 0; id < numThreads; id++){
             final int idf = id;
             futures.add(executor.submit(() -> {
                 synchronized(image){
                 int x = xtf + idf;
                 double particlePotential = system.averageMass/(double)system.particleSize;
-                for (int y=0; y<getHeight(); y++){
+                for (int y = 0; y < getHeight(); y++){
                     double potential = 0;
-                    for (int i=0;i<system.size;i++){
+                    for (int i = 0; i < system.size; i++){
                         double x_p = system.particles[i].pos.x;
                         double y_p = system.particles[i].pos.y;
-                        double r = Math.sqrt((x-x_p)*(x-x_p)+(y-y_p)*(y-y_p));
-                        if (r>0){
+                        double r = Math.sqrt((x - x_p) * (x-x_p) + (y-y_p) * (y - y_p));
+                        if (r > 0){
                             potential = potential + system.particles[i].mass/r;
                             //System.out.println(r+" "+potential+" "+1/r+" "+system.particles[i].size);
                         }else{
-                            image.setRGB(x, y, (new Color(0,200,0)).getRGB());
+                            image.setRGB(x, y, (new Color(0, 200, 0)).getRGB());
                             break;
                         }
                         //System.out.println(particlePotential);
                         if (potential >= particlePotential){
-                            image.setRGB(x, y, (new Color(0,200,0)).getRGB());
+                            image.setRGB(x, y, (new Color(0, 200, 0)).getRGB());
                             //Vec p = painted.get(0);
                             //System.out.println("Thread row "+x+" "+y+" "+image.getRGB(x, y)+" "+(new Color(0,200,0)).getRGB());}
                             break;
@@ -98,21 +119,21 @@ public class PSAppPanel extends JPanel implements Runnable,MouseListener{
     }
 
 	private void drawParticles(PSystem system){
-		image=new BufferedImage(getWidth(),getHeight(),BufferedImage.TYPE_INT_RGB);
-		Graphics g=image.createGraphics();
+		image = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
+		Graphics g = image.createGraphics();
 		g.setColor(Color.black);
   		g.fillRect(0, 0, image.getWidth(), image.getHeight());
-		g.setColor(new Color(0,200,0));
-		for (int i=0;i<system.size;i++){
-			int size=system.particles[i].size;
-			g.fillOval((int)(system.particles[i].pos.x-size),(int)(system.particles[i].pos.y-size),2*size,2*size);
+		g.setColor(new Color(0, 200, 0));
+		for (int i = 0; i < system.size; i++){
+			int size = system.particles[i].size;
+			g.fillOval((int)(system.particles[i].pos.x - size), (int)(system.particles[i].pos.y - size), 2 * size, 2 * size);
 		}
-		Iterator<SourceForce> it=system.sourceForces.iterator();
+		Iterator<SourceForce> it = system.sourceForces.iterator();
 		while (it.hasNext()){
-			SourceForce f=it.next();
+			SourceForce f = it.next();
 			if (!(f.isParticle())){
-				g.setColor(new Color(200,0,0));
-				g.fillOval((int)(f.pos.x-f.size),(int)(f.pos.y-f.size),2*f.size,2*f.size);
+				g.setColor(new Color(200, 0, 0));
+				g.fillOval((int)(f.pos.x - f.size), (int)(f.pos.y - f.size), 2 * f.size, 2 * f.size);
 			}
 		}
 	}	
@@ -122,7 +143,7 @@ public class PSAppPanel extends JPanel implements Runnable,MouseListener{
 		while(sw){
 			system.evolve(walls);
 			repaint();
-			pause((int)(PSystem.timeStep*1000));
+			pause((int)(PSystem.timeStep * 1000));
 		}
 	}
 
@@ -133,17 +154,17 @@ public class PSAppPanel extends JPanel implements Runnable,MouseListener{
 
 	Boolean sw=false;	
 	public void mouseClicked(MouseEvent e){
-		if (!(forceBeingSet)){
-			sw=!(sw);
+		if (!(awaitingInput)){
+			sw = !(sw);
 			if (sw){
 				animation.start();
 			}else{
-				animation=new Thread(this,"animation");
+				animation = new Thread(this, "animation");
 			}
 		}else{
-			mouseX=e.getX();
-			mouseY=e.getY();
-			forceBeingSet=false;
+			mouseX = e.getX();
+			mouseY = e.getY();
+			awaitingInput = false;
 		}	
 	}
 

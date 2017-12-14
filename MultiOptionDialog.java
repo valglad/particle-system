@@ -8,53 +8,56 @@ import java.text.NumberFormat;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeEvent;
 
-public class MultiOptionDialog extends JDialog implements ActionListener,PropertyChangeListener{
+public class MultiOptionDialog extends JDialog implements ActionListener{
 	private JButton okay=new JButton("ok");
-	private JFormattedTextField at=new JFormattedTextField(NumberFormat.getNumberInstance());
-	private JFormattedTextField nl=new JFormattedTextField(NumberFormat.getNumberInstance());
-	private JFormattedTextField dp=new JFormattedTextField(NumberFormat.getNumberInstance());
+	public volatile boolean awaitingInput=false;
+    protected int fieldNum; //number of fields
+    protected JFormattedTextField[] fields;
+    protected Object[] fieldVals;
 	private ControlPanel cp;
-	public double attraction=10;
-	public double distPower=-2;
-	public double natLength=0;
+//NumberFormat.getNumberInstance();
 	
-	public MultiOptionDialog(JFrame frame, String title,ControlPanel c){
-		super(frame,title,true);
-		cp=c;
-		
+	public MultiOptionDialog(int n, Object[] defaultVals, JFrame frame, String title, ControlPanel c){
+        // field types can be 'n' or 's' for number or string
+		super(frame, title, true);
+		cp = c;
+        fieldNum = n;
+        fields = new JFormattedTextField[n];
+        fieldVals = new Object[n];
+
 		Container pane = getContentPane();
 
 		okay.addActionListener(this);
-		
-		at.setValue(attraction);
-		at.setColumns(4);
-
-		nl.setValue(0);
-		nl.setColumns(4);
-
-		dp.setValue(-2);
-		dp.setColumns(4);
 
 		setLocationRelativeTo(null);
 		pane.setLayout(new FlowLayout());
-		pane.add(at);
-		pane.add(nl);
-		pane.add(dp);
 		pane.add(okay);
+
+        for (int i = 0; i < n; i++){
+	        fields[i] = new JFormattedTextField(defaultVals[i]);
+            fields[i].setColumns(6);
+	        fieldVals[i] = defaultVals[i];
+            pane.add(fields[i]);
+        }
+		
 		pack();
 	}
 
 	public void actionPerformed(ActionEvent e){
+        awaitingInput = false;
 		setVisible(false);
 	}
 
+/*
 	public void propertyChange(PropertyChangeEvent e){
 		Object source=e.getSource();
 		if (source==at)
-			attraction=((Number)at.getValue()).doubleValue();
+			attraction=((Number)source.getValue()).doubleValue();
 		if (source==dp)
 			distPower=((Number)dp.getValue()).doubleValue();
 		if (source==nl)
 			natLength=((Number)nl.getValue()).doubleValue();
 	}
+*/
+
 }

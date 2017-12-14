@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Iterator;
 import java.lang.Math;
 
-public class PSystem{
+public class PSystem implements java.io.Serializable{
 	public int time; //current time in the system
 	public static double timeStep=0.001;
 	public Particle[] particles;
@@ -25,7 +25,7 @@ public class PSystem{
 	public UniformForce gravity;
 	public boolean changeInterForces=false;
 	public double unitDistance=40; //no of pixels that constitute a unit distance wrt which force is applied
-	public CollisionManager cMngr;
+	public transient CollisionManager cMngr;
 
     public PSystem(Particle[] particles, CollisionManager cm){
         particles = particles;
@@ -33,64 +33,64 @@ public class PSystem{
         cMngr = cm;
     }
 
-	public PSystem(int width,int height,CollisionManager cm){ //width and height of the panel on which it will be displayed
-		this(defaultSize,width,height,cm);
+	public PSystem(int width, int height, CollisionManager cm){ //width and height of the panel on which it will be displayed
+		this(defaultSize, width, height, cm);
 	}
 
-	public PSystem(int s,int width,int height,double ul,CollisionManager cm){
+	public PSystem(int s, int width, int height, double ul, CollisionManager cm){
 		this(s,width,height,cm);
-		unitDistance=ul;
+		unitDistance = ul;
 	}
 
-	public PSystem(int s,int width,int height,CollisionManager cm){ //number of particles, ...
-		size=s;
-		particles=new Particle[size];
-		sourceForces=new HashSet<SourceForce>();
+	public PSystem(int s, int width, int height, CollisionManager cm){ //number of particles, ...
+		size = s;
+		particles = new Particle[size];
+		sourceForces = new HashSet<SourceForce>();
 		double mass, vx, vy;
         Vec velocity;
 		int pSize, dir;
-		for (int i=0;i<size;i++){
-			mass=((rangen.nextDouble()-0.5)*massVariation+1)*averageMass;
+		for (int i = 0; i < size; i++){
+			mass = ((rangen.nextDouble() - 0.5) * massVariation + 1) * averageMass;
             dir = rangen.nextInt(2);
             if (dir == 0) dir = -1;
-            vx = dir*((rangen.nextDouble()-0.5)*0.6+1)*averageSpeed;
+            vx = dir * ((rangen.nextDouble() - 0.5) * 0.6 + 1) * averageSpeed;
             dir = rangen.nextInt(2);
             if (dir == 0) dir = -1;
-            vy = dir*((rangen.nextDouble()-0.5)*0.6+1)*averageSpeed;
+            vy = dir*((rangen.nextDouble() - 0.5) * 0.6 + 1) * averageSpeed;
             velocity = new Vec(vx, vy);
-			pSize=(int)(particleSize*mass/averageMass);
-			particles[i]=new Particle(i,new Vec(rangen,width,height),velocity,1e2,mass,pSize);
-			sourceForces.add(new SourceForce(particles[i],interForceValue,1,300));
-			Particle p=particles[i];
-			if (p.pos.x>=width-p.size) p.pos.x=width-p.size;
-			if (p.pos.x<=p.size) p.pos.x=p.size;
-			if (p.pos.y>=height-p.size) p.pos.y=height-p.size;
-			if (p.pos.y<=p.size) p.pos.y=p.size;
+			pSize = (int)(particleSize * mass / averageMass);
+			particles[i] = new Particle(i, new Vec(rangen, width, height), velocity, 1e2, mass, pSize);
+			sourceForces.add(new SourceForce(particles[i], interForceValue, 1, 300));
+			Particle p = particles[i];
+			if (p.pos.x >= width - p.size) p.pos.x = width - p.size;
+			if (p.pos.x <= p.size) p.pos.x = p.size;
+			if (p.pos.y >= height-p.size) p.pos.y = height - p.size;
+			if (p.pos.y <= p.size) p.pos.y = p.size;
 		}
-		time=0;
-		cMngr=cm;
-		for (int i=0;i<size;i++){
-			for (int j=0;j<size;j++){
-				cMngr.collide(particles[i],particles[j],true); //to push the particles away if they overlap
+		time = 0;
+		cMngr = cm;
+		for (int i = 0; i < size; i++){
+			for (int j = 0; j < size; j++){
+				cMngr.collide(particles[i], particles[j], true); //to push the particles away if they overlap
 			}
 		}
-		gravity = new UniformForce(9.8, new Vec(0,1));
+		gravity = new UniformForce(9.8, new Vec(0, 1));
 	}
 
 	public void evolve(boolean walls){
 		Iterator<SourceForce> it;
-		boolean sw=false;
-		if (changeInterForces) sw=true;
-		for (int i=0;i<size;i++){
-			particles[i].prevPos=particles[i].pos;
+		boolean sw = false;
+		if (changeInterForces) sw = true;
+		for (int i = 0; i < size; i++){
+			particles[i].prevPos = particles[i].pos;
 			particles[i].pos.add(particles[i].vel.timesNew(timeStep));
-            if (walls){ cMngr.collideAtWalls(particles[i]);}
-			it=sourceForces.iterator();
+            if (walls) cMngr.collideAtWalls(particles[i]);
+			it = sourceForces.iterator();
 			while (it.hasNext()){
-				SourceForce force=it.next();
-				if (sw) force.attraction=interForceValue;
+				SourceForce force = it.next();
+				if (sw) force.attraction = interForceValue;
 				if (force.isParticle()){
-					cMngr.collide(particles[i],force.particle,false);
+					cMngr.collide(particles[i], force.particle, false);
 				  	if (!(interForces)) continue;
 				}
 				force.apply(particles[i], timeStep, unitDistance);
@@ -98,11 +98,11 @@ public class PSystem{
 			if (gravityOn) gravity.apply(particles[i], timeStep, unitDistance);
 		}
 		if (sw) changeInterForces=false;
-		it=sourceForces.iterator();
+		it = sourceForces.iterator();
 		while (it.hasNext()){
 			it.next().update();
 		}
-		time+=timeStep;
+		time += timeStep;
 	}
 
 	public Vec nextpos(Particle p){
@@ -120,8 +120,9 @@ public class PSystem{
 
 	public String toString(){
 		String s="Particle System: \n";
-		for(Integer i=0;i<size;i++)
+		for(Integer i = 0; i < size; i++)
 			s+=i.toString()+": "+particles[i].pos.toString()+", "+particles[i].vel.toString()+", "+particles[i].acc.toString()+"\n";		
 		return s;
 	}
 }	
+

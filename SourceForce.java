@@ -4,7 +4,7 @@ package particleSystem;
 
 //in "elastic" mode distPower increases by 1 during contraction
 
-public class SourceForce extends Particle{
+public class SourceForce extends Particle implements java.io.Serializable{
 	public double distPower; //inversely proportional to (distance-natLength)^distPower
 	public final Particle particle;
 	public double natLength; //0 if force is not elastic

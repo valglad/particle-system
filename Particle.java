@@ -1,6 +1,6 @@
 package particleSystem;
 
-public class Particle{
+public class Particle implements java.io.Serializable{
 	public Vec pos;
 	public Vec prevPos; //previous position; this is for managing collisions
 	public Vec vel;
