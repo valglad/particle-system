@@ -7,7 +7,7 @@ public class UniformForce implements java.io.Serializable{
 
 	public UniformForce(double a, Vec d, double n){
 		attraction = a;
-		direction = d.timesNew(1/Math.sqrt(d.magnitude())); //normalising
+		direction = d.times(1/Math.sqrt(d.magnitude())); //normalising
 		natLength = n;
 	}
 
@@ -15,7 +15,7 @@ public class UniformForce implements java.io.Serializable{
 		this(a, d, 0);
 	}
 
-	public void apply(Particle p, double timeStep, double unitDistance){
-		p.vel.add(direction.timesNew(attraction*timeStep*unitDistance));
+	public void apply(Particle p, double unitDistance){
+		p.acc = p.acc.add(direction.times(attraction*unitDistance/p.mass));
 	}
 }

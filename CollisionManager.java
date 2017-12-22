@@ -6,23 +6,27 @@ public class CollisionManager{
 	private PSAppPanel panel;
 	private double timeStep;
 	
-	public CollisionManager(PSAppPanel s,double t){
-		panel=s;
-		timeStep=t;
+	public CollisionManager(PSAppPanel s, double t){
+		panel = s;
+		timeStep = t;
 	}
 
 double gap=1;
-//updating the positions of both particles before processing other collisions is inaccurate but will do for now; maybe employ matrices to do everything simultaneously in the future (or concurrency)
-	public void collide(Particle p1,Particle p2,boolean start){
-		if (p1.number>=p2.number) return;
-		Vec diff=(p1.pos).difference(p2.pos);
-		double dist=Math.sqrt(diff.magnitude());
-		double crtDist=p1.size+p2.size;
-		if (dist<=crtDist){ //if particles are overlapping
+    // updating the positions of both particles before processing
+    // other collisions is inaccurate but will do for now; maybe
+    // employ matrices to do everything simultaneously in the future
+    // (or concurrency)
+	public void collide(Particle p1, Particle p2, boolean start){
+		if (p1.number >= p2.number) return;
+		Vec diff = (p1.pos).difference(p2.pos);
+		double dist = Math.sqrt(diff.magnitude());
+		double crtDist = p1.size + p2.size;
+
+		if (dist <= crtDist){ //if particles are overlapping
 			diff.normalise();
-			p1.pos.add(diff.timesNew((crtDist-dist)/2));
-			p2.pos.add(diff.timesNew((dist-crtDist)/2));
-			if (!start) collideInLine(p1,p2,diff);
+			p1.pos = p1.pos.add(diff.times((crtDist - dist)/2));
+			p2.pos = p2.pos.add(diff.times((dist - crtDist)/2));
+			if (!start) collideInLine(p1, p2, diff);
 		/*}else{
 			diff2=(p1.prevPos).difference(p2.prevPos);diff=nextpos(p1).difference(nextpos(p2));
 			double len=diff2.dot(diff);
@@ -37,32 +41,32 @@ double gap=1;
 
 
 //this uses cons of momentum and energy in 1-dimension (along the line of collision) to work out new velocities
-	private void collideInLine(Particle p1,Particle p2,Vec d){ //d is the vector along which the collision is happenning
+	private void collideInLine(Particle p1, Particle p2, Vec d){ //d is the vector along which the collision is happenning
 		double vel1 = p1.vel.dot(d); //speeds along the line of collision
 		double vel2 = p2.vel.dot(d);
-		double m1=p1.mass, m2=p2.mass;
-		double newVel1=((m1-m2)*vel1+2*m2*vel2)/(m1+m2);
-		double newVel2=((m2-m1)*vel2+2*m1*vel1)/(m1+m2);
-		p1.vel.add(d.timesNew(newVel1-vel1));
-		p2.vel.add(d.timesNew(newVel2-vel2));
+		double m1 = p1.mass, m2 = p2.mass;
+		double newVel1 = ((m1 - m2) * vel1 + 2 * m2 * vel2)/(m1 + m2);
+		double newVel2=((m2 - m1) * vel2 + 2 * m1 * vel1)/(m1 + m2);
+		p1.vel = p1.vel.add(d.times(newVel1 - vel1));
+		p2.vel = p2.vel.add(d.times(newVel2 - vel2));
 	}
 
 	public void collideAtWalls(Particle p){
-		double width=panel.getWidth();
-		double height=panel.getHeight();
-		if (p.pos.x>=width-p.size) {p.pos.x=width-p.size; p.vel.x*=-1;}
-		if (p.pos.x<=p.size) {p.pos.x=p.size; p.vel.x*=-1;}
-		if (p.pos.y>=height-p.size) {p.pos.y=height-p.size; p.vel.y*=-1;}
-		if (p.pos.y<=p.size) {p.pos.y=p.size; p.vel.y*=-1;}
+		double width = panel.getWidth();
+		double height = panel.getHeight();
+		if (p.pos.x >= width - p.size) {p.pos.x = width - p.size; p.vel.x *= -1;}
+		if (p.pos.x <= p.size) {p.pos.x = p.size; p.vel.x *= -1;}
+		if (p.pos.y >= height - p.size) {p.pos.y = height-p.size; p.vel.y *= -1;}
+		if (p.pos.y <= p.size) {p.pos.y = p.size; p.vel.y *= -1;}
 	}
 
 
 	public Vec nextpos(Particle p){
-		InputStreamReader in=new InputStreamReader(System.in);
-		BufferedReader keyboard=new BufferedReader(in);
-		System.out.println("Pos:"+p.pos+" Vel:"+p.vel+" Next:"+p.pos.addNew(p.vel.timesNew(-timeStep)));
+		InputStreamReader in = new InputStreamReader(System.in);
+		BufferedReader keyboard = new BufferedReader(in);
+		System.out.println("Pos:" + p.pos + " Vel:" + p.vel + " Next:" + p.pos.add(p.vel.times(-timeStep)));
 		try {keyboard.readLine();} catch (Exception e){System.out.println("input exception");}
-		return p.pos.addNew(p.vel.timesNew(timeStep));
+		return p.pos.add(p.vel.times(timeStep));
 	}
 }
 

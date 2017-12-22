@@ -21,26 +21,16 @@ public class Vec implements java.io.Serializable {
 		y = y1;
 	}
 
-	public void add(Vec v){
-		x += v.x;
-		y += v.y;
+	public Vec add(Vec v){
+		return new Vec(x + v.x, y + v.y);
 	}
 
-	public Vec addNew(Vec v){
-		return new Vec(x + v.x,y + v.y);
-	}
-
-	public Vec timesNew(double a){
-		return new Vec(x * a,y * a);
-	}
-
-	public void times(double a){
-		x *= a;
-		y *= a;
+	public Vec times(double a){
+		return new Vec(x * a, y * a);
 	}
 
 	public Vec difference(Vec v){
-		return new Vec(x - v.x,y - v.y);
+		return new Vec(x - v.x, y - v.y);
 	}
 
 	public double distance(Vec v){

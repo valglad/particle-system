@@ -102,6 +102,7 @@ public class ControlPanel extends JPanel implements ActionListener,ItemListener,
             //New System
 			if (animationPanel.animation.isAlive()) animationPanel.sw = false;
 			PSystem system = new PSystem(nextSystemSize, animationPanel.getWidth(), animationPanel.getHeight(), nextUnitDistance, animationPanel.system.cMngr);
+            interForceValue.setValue(animationPanel.system.interForceValue);
 			animationPanel.restart(system);
 
         } else if (e.getActionCommand() == "save"){
@@ -133,6 +134,7 @@ public class ControlPanel extends JPanel implements ActionListener,ItemListener,
             String name = (String)saveLoadName.fields[0].getValue();
             PSystem system = (PSystem)SavedSystems.load(name);
             system.cMngr = animationPanel.system.cMngr;
+            interForceValue.setValue(animationPanel.system.interForceValue);
             animationPanel.restart(system);
 
 		} else {
